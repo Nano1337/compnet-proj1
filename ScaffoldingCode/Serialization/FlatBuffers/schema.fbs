@@ -25,12 +25,130 @@ namespace CustomAppProto;
 // use the form <variable name: data type>. Note, this can be nested, and
 // there could be multiple such data structures defined.
 
-table Message
-{
-   seq_no: uint32;   // this is like the seq num in a TCP segment
-   ts: double;       // say this is the timestamp
-   name: string;      // say this is some descriptive string
-   data: [uint32];    // say this is some blob of binary data
+
+namespace CustomAppProto;
+
+// Author: Aniruddha Gokhale, Vanderbilt University
+// Created: Sept 2021 for Distributed Systems course
+// Modified: Fall 2022 for Computer Networking course
+
+enum MessageType : byte {
+   ORDER,
+   HEALTH,
+   RESPONSE
+}
+
+enum MilkType : byte {
+   ONE_PERCENT,
+   TWO_PERCENT,
+   FAT_FREE,
+   WHOLE,
+   ALMOND,
+   CASHEW,
+   OAT
+}
+
+enum BreadType : byte {
+   WHOLE_WHEAT,
+   PUMPERNICKEL,
+   RYE,
+   // Add more types as needed
+}
+
+enum MeatType : byte {
+   BEEF,
+   CHICKEN,
+   PORK,
+   TURKEY,
+   // Add more types as needed
+}
+
+enum DispenserStatus : byte {
+   OPTIMAL,
+   PARTIAL,
+   BLOCKAGE
+}
+
+enum LightbulbStatus : byte {
+   GOOD,
+   BAD
+}
+
+enum ResponseCode : byte {
+   OK,
+   BAD_REQUEST
+}
+
+table Milk {
+   type: MilkType;
+   quantity: float; // in gallons
+}
+
+table Bread {
+   type: BreadType;
+   quantity: float; // in loaves or similar unit
+}
+
+table Meat {
+   type: MeatType;
+   quantity: float; // in pounds or similar unit
+}
+
+table Veggies {
+   tomato: float;
+   cucumber: float;
+   lettuce: float;
+   broccoli: float;
+   spinach: float;
+   carrots: float;
+}
+
+table DrinksCans {
+   coke: int; // number of packs
+   beer: int;
+   lemonade: int;
+}
+
+table DrinksBottles {
+   sprite: int;
+   gingerale: int;
+   water: int;
+}
+
+table Drinks {
+   cans: DrinksCans;
+   bottles: DrinksBottles;
+}
+
+table Order {
+   veggies: Veggies;
+   drinks: Drinks;
+   milk: [Milk];
+   bread: [Bread];
+   meat: [Meat];
+}
+
+table Health {
+   dispenser: DispenserStatus;
+   icemaker: int;
+   lightbulb: LightbulbStatus;
+   fridge_temp: int;
+   freezer_temp: int;
+   sensor_status: LightbulbStatus;
+   // Additional fields as per imagination
+   water_filter: LightbulbStatus;
+}
+
+table Response {
+   code: ResponseCode;
+   contents: string;
+}
+
+table Message {
+   type: MessageType;
+   order: Order;
+   health: Health;
+   response: Response;
 }
 
 // indicate what is the top level structure from where the serialization starts.

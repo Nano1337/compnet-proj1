@@ -12,19 +12,38 @@ from dataclasses import dataclass
 @dataclass
 class CustomMessage:
   """ Our message in native representation"""
-  seq_num: int  # a sequence number
-  ts: float    # timestamp
-  name: str    # some name
-  vec: List[int] # some vector of unsigned ints
+
+  type = None # type of message
+  order = None # order message
+  health = None # health message
+  response = None # response message
 
   def __init__ (self):
     pass
   
-  def dump (self):
-    print ("Dumping contents of Custom Message")
-    print ("  Seq Num: {}".format (self.seq_num))
-    print ("  Timestamp: {}".format (self.ts))
-    print ("  Name: {}".format (self.name))
-    print ("  Vector type = {}".format (type (self.vec)))
-    print ("  Vector: {}".format (self.vec))
-  
+  def dump(self):
+    print("Dumping contents of Custom Message")
+    print("  Type: {}".format(self.type))
+    
+    if self.type == "ORDER" and self.order:
+        print("  Order Details:")
+
+        # print out all contents of the order
+        for key, value in self.order.items():
+            print("    {}: {}".format(key, value))
+
+    elif self.type == "HEALTH" and self.health:
+        #FIXME: not the right way to print out
+        print("  Health Details:")
+        print("    Dispenser: {}".format(self.health.get('dispenser')))
+        print("    Icemaker: {}".format(self.health.get('icemaker')))
+        print("    Lightbulb: {}".format(self.health.get('lightbulb')))
+        print("    Fridge Temperature: {}".format(self.health.get('fridge_temp')))
+        print("    Freezer Temperature: {}".format(self.health.get('freezer_temp')))
+        print("    Sensor Status: {}".format(self.health.get('sensor_status')))
+    
+    elif self.type == "RESPONSE" and self.response:
+        #FIXME: not the right way to print out
+        print("  Response Details:")
+        print("    Code: {}".format(self.response.get('code')))
+        print("    Contents: {}".format(self.response.get('contents')))

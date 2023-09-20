@@ -24,45 +24,97 @@ import serialize as sz  # this is from the file serialize.py in the same directo
 #        Driver program
 ##################################
 
-def driver (name, iters, vec_len):
 
-  print ("Driver program: Name = {}, Num Iters = {}, Vector len = {}".format (name, iters, vec_len))
+def driver(name, iters, vec_len):
+    print("Driver program: Name = {}, Num Iters = {}, Vector len = {}".format(name, iters, vec_len))
     
-  # now publish our information for the number of desired iterations
-  cm = CustomMessage ()   # create this once and reuse it for send/receive
-  for i in range (iters):
+    for i in range(iters):
+        # for every iteration, let us fill up our custom message
+        cm = CustomMessage()  # create a new instance for each iteration
 
-    # for every iteration, let us fill up our custom message
-    cm.seq_num = i # this will be our sequence number
-    cm.ts = time.time ()  # current time
-    cm.name = name # assigned name
-    cm.vec = [random.randint (1, 1000) for j in range (vec_len)]
-    print ("-----Iteration: {} contents of message before serializing ----------".format (i))
-    cm.dump ()
+        cm.type = "ORDER"        
+
+        # Generate random values for Veggies
+        veggies = {
+            'tomato': random.uniform(0, 5),
+            'cucumber': random.uniform(0, 5),
+            'lettuce': random.uniform(0, 5),
+            'broccoli': random.uniform(0, 5),
+            'spinach': random.uniform(0, 5),
+            'carrots': random.uniform(0, 5)
+        }
+
+        # Generate random values for DrinksCans
+        drinks_cans = {
+            'coke': random.randint(1, 5),
+            'beer': random.randint(1, 5),
+            'lemonade': random.randint(1, 5)
+        }
+
+        # Generate random values for DrinksBottles
+        drinks_bottles = {
+            'sprite': random.randint(1, 5),
+            'gingerale': random.randint(1, 5),
+            'water': random.randint(1, 5)
+        }
+
+        # Aggregate Drinks
+        drinks = {
+            'cans': drinks_cans,
+            'bottles': drinks_bottles
+        }
+
+        # Generate random values for Milk
+        milk = [{
+            'type': random.choice(['ONE_PERCENT', 'TWO_PERCENT', 'FAT_FREE', 'WHOLE', 'ALMOND', 'CASHEW', 'OAT']),
+            'quantity': random.uniform(0, 5)
+        }]
+
+        # Generate random values for Bread
+        bread = [{
+            'type': random.choice(['WHOLE_WHEAT', 'PUMPERNICKEL', 'RYE']),
+            'quantity': random.uniform(0, 5)
+        }]
+
+        # Generate random values for Meat
+        meat = [{
+            'type': random.choice(['BEEF', 'CHICKEN', 'PORK', 'TURKEY']),
+            'quantity': random.uniform(0, 5)
+        }]
+
+        # Combine all into Order
+        cm.order = {
+            'veggies': veggies,
+            'drinks': drinks,
+            'milk': milk,
+            'bread': bread,
+            'meat': meat
+        }
+
+        print(cm)
+
         
-    # here we are calling our serialize method passing it
-    # the iteration number, the topic identifier, and length.
-    # The underlying method creates some dummy data, fills
-    # up the data structure and serializes it into the buffer
-    print ("serialize the message")
-    start_time = time.time ()
-    buf = sz.serialize (cm)
-    end_time = time.time ()
-    print ("Serialization took {} secs".format (end_time-start_time))
+        print("-----Iteration: {} contents of message before serializing ----------".format(i))
+        cm.dump()
 
-    # now deserialize and see if it is printing the right thing
-    print ("deserialize the message")
-    start_time = time.time ()
-    cm = sz.deserialize (buf)
-    end_time = time.time ()
-    print ("Deserialization took {} secs".format (end_time-start_time))
+        # serialize the message
+        print("serialize the message")
+        start_time = time.time()
+        buf = sz.serialize(cm)
+        end_time = time.time()
+        print("Serialization took {} secs".format(end_time - start_time))
 
-    print ("------ contents of message after deserializing ----------")
-    cm.dump ()
+        # deserialize and inspect the result
+        print("deserialize the message")
+        start_time = time.time()
+        cm = sz.deserialize(buf)
+        end_time = time.time()
+        print("Deserialization took {} secs".format(end_time - start_time))
 
-    # sleep a while before we send the next serialization so it is not
-    # extremely fast
-    time.sleep (0.050)  # 50 msec
+        print("------ contents of message after deserializing ----------")
+        cm.dump()
+
+        time.sleep(0.050)  # 50 msec
 
 
 ##################################

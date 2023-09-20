@@ -24,45 +24,198 @@ import numpy as np  # to use in our vector field
 import zmq   # we need this for additional constraints provided by the zmq serialization
 
 from custom_msg import CustomMessage  # our custom message in native format
-import CustomAppProto.Message as msg   # this is the generated code by the flatc compiler
+import CustomAppProto.Message as msg
+from CustomAppProto.MessageType import MessageType
+import CustomAppProto.Order as Order
+import CustomAppProto.Health as Health
+import CustomAppProto.Response as Response
+import CustomAppProto.Milk as Milk
+from CustomAppProto.MilkType import MilkType
+import CustomAppProto.ResponseCode as ResponseCode
+import CustomAppProto.DispenserStatus as DispenserStatus
+import CustomAppProto.LightbulbStatus as LightbulbStatus
+import CustomAppProto.Veggies as Veggies
+import CustomAppProto.Drinks as Drinks
+import CustomAppProto.DrinksCans as DrinksCans
+import CustomAppProto.DrinksBottles as DrinksBottles
+import CustomAppProto.Bread as Bread
+from CustomAppProto.BreadType import BreadType
+import CustomAppProto.Meat as Meat
+from CustomAppProto.MeatType import MeatType
 
 # This is the method we will invoke from our driver program
 # Note that if you have have multiple different message types, we could have
 # separate such serialize/deserialize methods, or a single method can check what
 # type of message it is and accordingly take actions.
-def serialize (cm):
-    # first obtain the builder object that is used to create an in-memory representation
-    # of the serialized object from the custom message
-    builder = flatbuffers.Builder (0);
 
-    # create the name string for the name field using
-    # the parameter we passed
-    name_field = builder.CreateString (cm.name)
+'''
+Find an input given output of enum
+
+Example usage: key = type_to_key(MilkType)(0) where 0 is the value of the enum
+'''
+def get_key(func): 
+    return lambda input: next(
+        key for key, value in func.__dict__.items() if value == input
+    )
+
+
+def serialize(cm):
+    builder = flatbuffers.Builder(0)
+
+    # Depending on the message type, serialize differently
+    if cm.type == "ORDER":
+        # Serialize Milk list
+        milk_offsets = []
+        for milk_item in cm.order['milk']:
+            Milk.MilkStart(builder)
+            milk_type_value = getattr(MilkType, milk_item['type'], None)
+            Milk.MilkAddType(builder, milk_type_value)
+            Milk.MilkAddQuantity(builder, milk_item['quantity'])
+            milk_offset = Milk.MilkEnd(builder)
+            milk_offsets.append(milk_offset)
+        
+        # Create the Milk vector
+        Order.OrderStartMilkVector(builder, len(milk_offsets))
+        for offset in reversed(milk_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        milk_vector = builder.EndVector(len(milk_offsets))
+
+        # Start the Veggies object
+        Veggies.VeggiesStart(builder)
+
+        # Add each vegetable to the builder
+        Veggies.VeggiesAddTomato(builder, cm.order['veggies']['tomato'])
+        Veggies.VeggiesAddCucumber(builder, cm.order['veggies']['cucumber'])
+        Veggies.VeggiesAddLettuce(builder, cm.order['veggies']['lettuce'])
+        Veggies.VeggiesAddBroccoli(builder, cm.order['veggies']['broccoli'])
+        Veggies.VeggiesAddSpinach(builder, cm.order['veggies']['spinach'])
+        Veggies.VeggiesAddCarrots(builder, cm.order['veggies']['carrots'])
+
+        # End the Veggies object and get the offset
+        veggies = Veggies.VeggiesEnd(builder)
+
+        # Serialize Drinks
+        
+        # Start the Drinks object
+        drinks_cans = DrinksCans.DrinksCansStart(builder)
+
+        # Add each can to the builder
+        DrinksCans.DrinksCansAddCoke(builder, cm.order['drinks']['cans']['coke'])
+        DrinksCans.DrinksCansAddBeer(builder, cm.order['drinks']['cans']['beer'])
+        DrinksCans.DrinksCansAddLemonade(builder, cm.order['drinks']['cans']['lemonade'])
+
+        # End the DrinksCans object and get the offset
+        drinks_cans = DrinksCans.DrinksCansEnd(builder)
+
+        # Start the DrinksBottles object
+        drinks_bottles = DrinksBottles.DrinksBottlesStart(builder)
+
+        # Add each bottle to the builder
+        DrinksBottles.DrinksBottlesAddSprite(builder, cm.order['drinks']['bottles']['sprite'])
+        DrinksBottles.DrinksBottlesAddGingerale(builder, cm.order['drinks']['bottles']['gingerale'])
+        DrinksBottles.DrinksBottlesAddWater(builder, cm.order['drinks']['bottles']['water'])
+
+        # End the DrinksBottles object and get the offset
+        drinks_bottles = DrinksBottles.DrinksBottlesEnd(builder)
+
+        # Start the Drinks object
+        drinks = Drinks.DrinksStart(builder)
+
+        # Add the DrinksCans and DrinksBottles offsets to the Drinks object
+        Drinks.DrinksAddCans(builder, drinks_cans)
+        Drinks.DrinksAddBottles(builder, drinks_bottles)
+
+        # End the Drinks object and get the offset
+        drinks = Drinks.DrinksEnd(builder)
+        
+        # Serialize Bread and Meat (similar to how Milk is serialized)
+        bread_offsets = []
+        for bread_item in cm.order['bread']:
+            Bread.BreadStart(builder)
+            bread_type_value = getattr(BreadType, bread_item['type'], None)
+            Bread.BreadAddType(builder, bread_type_value)
+            Bread.BreadAddQuantity(builder, bread_item['quantity'])
+            bread_offset = Bread.BreadEnd(builder)
+            bread_offsets.append(bread_offset)
+
+        Order.OrderStartBreadVector(builder, len(bread_offsets))
+        for offset in reversed(bread_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        bread_vector = builder.EndVector(len(bread_offsets))
+
+        meat_offsets = []
+        for meat_item in cm.order['meat']:
+            Meat.MeatStart(builder)
+            meat_type_value = getattr(MeatType, meat_item['type'], None)
+            Meat.MeatAddType(builder, meat_type_value)
+            Meat.MeatAddQuantity(builder, meat_item['quantity'])
+            meat_offset = Meat.MeatEnd(builder)
+            meat_offsets.append(meat_offset)
+
+        Order.OrderStartMeatVector(builder, len(meat_offsets))
+        for offset in reversed(meat_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        meat_vector = builder.EndVector(len(meat_offsets))
+
+        # Start the Order FlatBuffer object
+        Order.OrderStart(builder)
+
+        # Add each of the fields
+        Order.OrderAddVeggies(builder, veggies)
+        Order.OrderAddDrinks(builder, drinks)
+
+        # Assuming milk_vector, bread_offsets, and meat_offsets are offsets to already built vectors in the builder
+        Order.OrderAddMilk(builder, milk_vector)
+        Order.OrderAddBread(builder, bread_vector)
+        Order.OrderAddMeat(builder, meat_vector)
+
+        # End the Order FlatBuffer object
+        serialized_msg = Order.OrderEnd(builder)
+
+    elif cm.type == "HEALTH":
+        # FIXME: Serialize Health correctly like above
+        serialized_msg = Health.Health.CreateHealth(
+            builder,
+            cm.health['dispenser'],
+            cm.health['icemaker'],
+            cm.health['lightbulb'],
+            cm.health['fridge_temp'],
+            cm.health['freezer_temp'],
+            cm.health['sensor_status']
+        )
+
+    elif cm.type == "RESPONSE":
+        # FIXME: Serialize Health correctly like above
+        contents_offset = builder.CreateString(cm.response['contents'])
+        serialized_msg = Response.Response.CreateResponse(
+            builder,
+            cm.response['code'],
+            contents_offset
+        )
+
+    # Finish the top-level message serialization
+    # Start the Message object
+    msg.MessageStart(builder)
     
-    # serialize our dummy array. The sample code in Flatbuffers
-    # describes doing this in reverse order
-    msg.StartDataVector (builder, len (cm.vec))
-    for i in reversed (range (len (cm.vec))):
-        builder.PrependUint32 (cm.vec[i])
-    data = builder.EndVector ()
-    
-    # let us create the serialized msg by adding contents to it.
-    # Our custom msg consists of a seq num, timestamp, name, and an array of uint32s
-    msg.Start (builder)  # serialization starts with the "Start" method
-    msg.AddSeqNo (builder, cm.seq_num)
-    msg.AddTs (builder, cm.ts)   # serialize current timestamp
-    msg.AddName (builder, name_field)  # serialize the name
-    msg.AddData (builder, data)  # serialize the dummy data
-    serialized_msg = msg.End (builder)  # get the topic of all these fields
+    # Set the type of the message
+    message_type = getattr(MessageType, cm.type, None)
 
-    # end the serialization process
-    builder.Finish (serialized_msg)
+    # Use msg.MessageAddType correctly
+    msg.MessageAddType(builder, message_type)
 
-    # get the serialized buffer
-    buf = builder.Output ()
+    if cm.type == "ORDER":
+        msg.AddOrder(builder, serialized_msg)
+    elif cm.type == "HEALTH":
+        msg.AddHealth(builder, serialized_msg)
+    elif cm.type == "RESPONSE":
+        msg.AddResponse(builder, serialized_msg)
 
-    # return this serialized buffer to the caller
-    return buf
+    # close out the message
+    final_msg = msg.End(builder)
+    builder.Finish(final_msg)
+
+    return builder.Output()
+
 
 # serialize the custom message to iterable frame objects needed by zmq
 def serialize_to_frames (cm):
@@ -75,28 +228,103 @@ def serialize_to_frames (cm):
   
   
 # deserialize the incoming serialized structure into native data type
-def deserialize (buf):
-    cm = CustomMessage ()
-    
-    packet = msg.Message.GetRootAs (buf, 0)
+def deserialize(buf):
 
-    # sequence number
-    cm.seq_num = packet.SeqNo ()
+    # Placeholder for our custom message
+    cm = CustomMessage()
 
-    # timestamp received
-    cm.ts = packet.Ts ()
+    # Extract the main message from the buffer
+    packet = msg.Message.GetRootAs(buf, 0)
 
-    # name received
-    cm.name = packet.Name ()
+    # Extract the message type
+    cm.type = packet.Type()
 
-    # received vector data
-    # We can obtain the vector like this but it changes the
-    # type from List to NumpyArray, which may not be what one wants.
-    #cm.vec = packet.DataAsNumpy ()
-    cm.vec = [packet.Data (j) for j in range (packet.DataLength ())]
+    # Depending on the message type, deserialize differently
+    if cm.type == MessageType.ORDER:
+        order = packet.Order()
+        if cm.order is None:
+            cm.order = {}
+
+        # Deserialize Milk
+        cm.order['milk'] = []
+        for i in range(order.MilkLength()):
+            milk_item = order.Milk(i)
+            cm.order['milk'].append({
+                'type': get_key(MilkType)(milk_item.Type()),
+                'quantity': milk_item.Quantity()
+            })
+
+        # Deserialize Veggies
+        veggies = order.Veggies()
+        cm.order['veggies'] = {
+            'tomato': veggies.Tomato(),
+            'cucumber': veggies.Cucumber(),
+            'lettuce': veggies.Lettuce(),
+            'broccoli': veggies.Broccoli(),
+            'spinach': veggies.Spinach(),
+            'carrots': veggies.Carrots()
+        }
+
+        # Deserialize Drinks
+        drinks = order.Drinks()
+        cans = drinks.Cans()
+        bottles = drinks.Bottles()
+        cm.order['drinks'] = {
+            'cans': {
+                'coke': cans.Coke(),
+                'beer': cans.Beer(),
+                'lemonade': cans.Lemonade()
+            },
+            'bottles': {
+                'sprite': bottles.Sprite(),
+                'gingerale': bottles.Gingerale(),
+                'water': bottles.Water()
+            }
+        }
+
+        # Deserialize Bread
+        cm.order['bread'] = []
+        for i in range(order.BreadLength()):
+            bread_item = order.Bread(i)
+            cm.order['bread'].append({
+                'type': get_key(BreadType)(bread_item.Type()),
+                'quantity': bread_item.Quantity()
+            })
+
+        # Deserialize Meat
+        cm.order['meat'] = []
+        for i in range(order.MeatLength()):
+            meat_item = order.Meat(i)
+            cm.order['meat'].append({
+                'type': get_key(MeatType)(meat_item.Type()), 
+                'quantity': meat_item.Quantity()
+            })
+        
+
+    elif cm.type == MessageType.HEALTH:
+        # FIXME: Deserialize Health correctly, similar to above
+        health = packet.Health()
+        cm.health = {
+            'dispenser': health.Dispenser(),
+            'icemaker': health.Icemaker(),
+            'lightbulb': health.Lightbulb(),
+            'fridge_temp': health.FridgeTemp(),
+            'freezer_temp': health.FreezerTemp(),
+            'sensor_status': health.SensorStatus()
+        }
+
+    elif cm.type == MessageType.RESPONSE:
+        # FIXME: Deserialize Response correctly, similar to above
+        response = packet.Response()
+        cm.response = {
+            'code': response.Code(),
+            'contents': response.Contents()
+        }
+
+    cm.type = get_key(MessageType)(cm.type)
 
     return cm
-    
+
 # deserialize from frames
 def deserialize_from_frames (recvd_seq):
   """ This is invoked on list of frames by zmq """

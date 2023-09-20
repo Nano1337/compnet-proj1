@@ -25,71 +25,77 @@ class Message(object):
         self._tab = flatbuffers.table.Table(buf, pos)
 
     # Message
-    def SeqNo(self):
+    def Type(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(4))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Uint32Flags, o + self._tab.Pos)
+            return self._tab.Get(flatbuffers.number_types.Int8Flags, o + self._tab.Pos)
         return 0
 
     # Message
-    def Ts(self):
+    def Order(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(6))
         if o != 0:
-            return self._tab.Get(flatbuffers.number_types.Float64Flags, o + self._tab.Pos)
-        return 0.0
-
-    # Message
-    def Name(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
-        if o != 0:
-            return self._tab.String(o + self._tab.Pos)
+            x = self._tab.Indirect(o + self._tab.Pos)
+            from CustomAppProto.Order import Order
+            obj = Order()
+            obj.Init(self._tab.Bytes, x)
+            return obj
         return None
 
     # Message
-    def Data(self, j):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
+    def Health(self):
+        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(8))
         if o != 0:
-            a = self._tab.Vector(o)
-            return self._tab.Get(flatbuffers.number_types.Uint32Flags, a + flatbuffers.number_types.UOffsetTFlags.py_type(j * 4))
-        return 0
+            x = self._tab.Indirect(o + self._tab.Pos)
+            from CustomAppProto.Health import Health
+            obj = Health()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
 
     # Message
-    def DataAsNumpy(self):
+    def Response(self):
         o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
         if o != 0:
-            return self._tab.GetVectorAsNumpy(flatbuffers.number_types.Uint32Flags, o)
-        return 0
+            x = self._tab.Indirect(o + self._tab.Pos)
+            from CustomAppProto.Response import Response
+            obj = Response()
+            obj.Init(self._tab.Bytes, x)
+            return obj
+        return None
 
-    # Message
-    def DataLength(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
-        if o != 0:
-            return self._tab.VectorLen(o)
-        return 0
+def MessageStart(builder):
+    builder.StartObject(4)
 
-    # Message
-    def DataIsNone(self):
-        o = flatbuffers.number_types.UOffsetTFlags.py_type(self._tab.Offset(10))
-        return o == 0
-
-def MessageStart(builder): builder.StartObject(4)
 def Start(builder):
-    return MessageStart(builder)
-def MessageAddSeqNo(builder, seqNo): builder.PrependUint32Slot(0, seqNo, 0)
-def AddSeqNo(builder, seqNo):
-    return MessageAddSeqNo(builder, seqNo)
-def MessageAddTs(builder, ts): builder.PrependFloat64Slot(1, ts, 0.0)
-def AddTs(builder, ts):
-    return MessageAddTs(builder, ts)
-def MessageAddName(builder, name): builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(name), 0)
-def AddName(builder, name):
-    return MessageAddName(builder, name)
-def MessageAddData(builder, data): builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(data), 0)
-def AddData(builder, data):
-    return MessageAddData(builder, data)
-def MessageStartDataVector(builder, numElems): return builder.StartVector(4, numElems, 4)
-def StartDataVector(builder, numElems):
-    return MessageStartDataVector(builder, numElems)
-def MessageEnd(builder): return builder.EndObject()
+    MessageStart(builder)
+
+def MessageAddType(builder, type):
+    builder.PrependInt8Slot(0, type, 0)
+
+def AddType(builder, type):
+    MessageAddType(builder, type)
+
+def MessageAddOrder(builder, order):
+    builder.PrependUOffsetTRelativeSlot(1, flatbuffers.number_types.UOffsetTFlags.py_type(order), 0)
+
+def AddOrder(builder, order):
+    MessageAddOrder(builder, order)
+
+def MessageAddHealth(builder, health):
+    builder.PrependUOffsetTRelativeSlot(2, flatbuffers.number_types.UOffsetTFlags.py_type(health), 0)
+
+def AddHealth(builder, health):
+    MessageAddHealth(builder, health)
+
+def MessageAddResponse(builder, response):
+    builder.PrependUOffsetTRelativeSlot(3, flatbuffers.number_types.UOffsetTFlags.py_type(response), 0)
+
+def AddResponse(builder, response):
+    MessageAddResponse(builder, response)
+
+def MessageEnd(builder):
+    return builder.EndObject()
+
 def End(builder):
     return MessageEnd(builder)
