@@ -6,3 +6,4 @@ class BreadType(object):
     WHOLE_WHEAT = 0
     PUMPERNICKEL = 1
     RYE = 2
+    BARLEY = 3

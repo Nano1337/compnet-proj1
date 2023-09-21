@@ -52,7 +52,7 @@ enum BreadType : byte {
    WHOLE_WHEAT,
    PUMPERNICKEL,
    RYE,
-   // Add more types as needed
+   BARLEY,
 }
 
 enum MeatType : byte {
@@ -60,7 +60,7 @@ enum MeatType : byte {
    CHICKEN,
    PORK,
    TURKEY,
-   // Add more types as needed
+   LAMB,
 }
 
 enum DispenserStatus : byte {
@@ -69,7 +69,7 @@ enum DispenserStatus : byte {
    BLOCKAGE
 }
 
-enum LightbulbStatus : byte {
+enum DeviceStatus : byte {
    GOOD,
    BAD
 }
@@ -131,12 +131,12 @@ table Order {
 table Health {
    dispenser: DispenserStatus;
    icemaker: int;
-   lightbulb: LightbulbStatus;
+   lightbulb: DeviceStatus;
    fridge_temp: int;
    freezer_temp: int;
-   sensor_status: LightbulbStatus;
+   sensor_status: DeviceStatus;
    // Additional fields as per imagination
-   water_filter: LightbulbStatus;
+   water_filter: DeviceStatus;
 }
 
 table Response {

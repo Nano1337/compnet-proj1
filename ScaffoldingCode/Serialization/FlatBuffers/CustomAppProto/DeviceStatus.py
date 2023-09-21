@@ -2,9 +2,6 @@
 
 # namespace: CustomAppProto
 
-class MeatType(object):
-    BEEF = 0
-    CHICKEN = 1
-    PORK = 2
-    TURKEY = 3
-    LAMB = 4
+class DeviceStatus(object):
+    GOOD = 0
+    BAD = 1

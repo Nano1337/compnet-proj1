@@ -10,12 +10,3 @@ class MilkType(object):
     ALMOND = 4
     CASHEW = 5
     OAT = 6
-
-def type_to_key(func): 
-    return lambda input: next(
-        key for key, value in func.__dict__.items() if value == input
-    )
-
-key = type_to_key(MilkType)(0)
-
-print(key)
