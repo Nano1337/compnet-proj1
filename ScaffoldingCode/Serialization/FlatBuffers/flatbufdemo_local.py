@@ -32,64 +32,83 @@ def driver(name, iters, vec_len):
         # for every iteration, let us fill up our custom message
         cm = CustomMessage()  # create a new instance for each iteration
 
-        cm.type = "ORDER"        
+        cm.type = random.choice(['ORDER', 'HEALTH', 'RESPONSE'])     
 
-        # Generate random values for Veggies
-        veggies = {
-            'tomato': random.uniform(0, 5),
-            'cucumber': random.uniform(0, 5),
-            'lettuce': random.uniform(0, 5),
-            'broccoli': random.uniform(0, 5),
-            'spinach': random.uniform(0, 5),
-            'carrots': random.uniform(0, 5)
-        }
+        if cm.type == 'ORDER':
 
-        # Generate random values for DrinksCans
-        drinks_cans = {
-            'coke': random.randint(1, 5),
-            'beer': random.randint(1, 5),
-            'lemonade': random.randint(1, 5)
-        }
+            # Generate random values for Veggies
+            veggies = {
+                'tomato': random.uniform(0, 5),
+                'cucumber': random.uniform(0, 5),
+                'lettuce': random.uniform(0, 5),
+                'broccoli': random.uniform(0, 5),
+                'spinach': random.uniform(0, 5),
+                'carrots': random.uniform(0, 5)
+            }
 
-        # Generate random values for DrinksBottles
-        drinks_bottles = {
-            'sprite': random.randint(1, 5),
-            'gingerale': random.randint(1, 5),
-            'water': random.randint(1, 5)
-        }
+            # Generate random values for DrinksCans
+            drinks_cans = {
+                'coke': random.randint(1, 5),
+                'beer': random.randint(1, 5),
+                'lemonade': random.randint(1, 5)
+            }
 
-        # Aggregate Drinks
-        drinks = {
-            'cans': drinks_cans,
-            'bottles': drinks_bottles
-        }
+            # Generate random values for DrinksBottles
+            drinks_bottles = {
+                'sprite': random.randint(1, 5),
+                'gingerale': random.randint(1, 5),
+                'water': random.randint(1, 5)
+            }
 
-        # Generate random values for Milk
-        milk = [{
-            'type': random.choice(['ONE_PERCENT', 'TWO_PERCENT', 'FAT_FREE', 'WHOLE', 'ALMOND', 'CASHEW', 'OAT']),
-            'quantity': random.uniform(0, 5)
-        }]
+            # Aggregate Drinks
+            drinks = {
+                'cans': drinks_cans,
+                'bottles': drinks_bottles
+            }
 
-        # Generate random values for Bread
-        bread = [{
-            'type': random.choice(['WHOLE_WHEAT', 'PUMPERNICKEL', 'RYE']),
-            'quantity': random.uniform(0, 5)
-        }]
+            # Generate random values for Milk
+            milk = [{
+                'type': random.choice(['ONE_PERCENT', 'TWO_PERCENT', 'FAT_FREE', 'WHOLE', 'ALMOND', 'CASHEW', 'OAT']),
+                'quantity': random.uniform(0, 5)
+            }]
 
-        # Generate random values for Meat
-        meat = [{
-            'type': random.choice(['BEEF', 'CHICKEN', 'PORK', 'TURKEY']),
-            'quantity': random.uniform(0, 5)
-        }]
+            # Generate random values for Bread
+            bread = [{
+                'type': random.choice(['WHOLE_WHEAT', 'PUMPERNICKEL', 'RYE']),
+                'quantity': random.uniform(0, 5)
+            }]
 
-        # Combine all into Order
-        cm.order = {
-            'veggies': veggies,
-            'drinks': drinks,
-            'milk': milk,
-            'bread': bread,
-            'meat': meat
-        }
+            # Generate random values for Meat
+            meat = [{
+                'type': random.choice(['BEEF', 'CHICKEN', 'PORK', 'TURKEY']),
+                'quantity': random.uniform(0, 5)
+            }]
+
+            # Combine all into Order
+            cm.order = {
+                'veggies': veggies,
+                'drinks': drinks,
+                'milk': milk,
+                'bread': bread,
+                'meat': meat
+            }
+        
+        elif cm.type == 'HEALTH':
+            cm.health = {
+                'dispenser': random.choice(['OPTIMAL', 'PARTIAL', 'BLOCKAGE']),
+                'icemaker': random.uniform(0, 5),
+                'lightbulb': random.choice(['GOOD', 'BAD']),
+                'fridge_temp': random.uniform(0, 5),
+                'freezer_temp': random.uniform(0, 5),
+                'sensor_status': random.choice(['GOOD', 'BAD']),
+                'water_filter': random.choice(['GOOD', 'BAD'])
+            }
+        
+        elif cm.type == 'RESPONSE':
+            cm.response = {
+                'code': random.randint(0, 5),
+                'contents': random.choice(['OK', 'ERROR'])
+            }
 
         print(cm)
 

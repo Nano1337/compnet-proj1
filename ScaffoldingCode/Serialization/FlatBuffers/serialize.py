@@ -42,6 +42,7 @@ import CustomAppProto.Bread as Bread
 from CustomAppProto.BreadType import BreadType
 import CustomAppProto.Meat as Meat
 from CustomAppProto.MeatType import MeatType
+import CustomAppProto.DeviceStatus as DeviceStatus
 
 # This is the method we will invoke from our driver program
 # Note that if you have have multiple different message types, we could have
@@ -174,24 +175,80 @@ def serialize(cm):
 
     elif cm.type == "HEALTH":
         # FIXME: Serialize Health correctly like above
-        serialized_msg = Health.Health.CreateHealth(
-            builder,
-            cm.health['dispenser'],
-            cm.health['icemaker'],
-            cm.health['lightbulb'],
-            cm.health['fridge_temp'],
-            cm.health['freezer_temp'],
-            cm.health['sensor_status']
-        )
+        Health.HealthStart(builder)
+        
+        dispenser_offsets = []
+        for dispenser_item in cm.health['dispenser']:
+            DispenserStatus.DispenserStatusStart(builder)
+            dispenser_status_value = getattr(DispenserStatus, dispenser_item['status'], None)
+            DispenserStatus.DispenserStatusAddStatus(builder, dispenser_status_value)
+            dispenser_offset = DispenserStatus.DispenserStatusEnd(builder)
+            dispenser_offsets.append(dispenser_offset)
+
+        Health.HealthStartDispenserVector(builder, len(dispenser_offsets))
+        for offset in reversed(dispenser_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        dispenser_vector = builder.EndVector(len(dispenser_offsets))
+
+        # icemaker is an int
+        icemaker_vector = cm.health['icemaker']
+
+        lightbulb_offsets = []
+        for lightbulb_item in cm.health['lightbulb']:
+            LightbulbStatus.LightbulbStatusStart(builder)
+            lightbulb_status_value = getattr(LightbulbStatus, lightbulb_item['status'], None)
+            LightbulbStatus.LightbulbStatusAddStatus(builder, lightbulb_status_value)
+            lightbulb_offset = LightbulbStatus.LightbulbStatusEnd(builder)
+            lightbulb_offsets.append(lightbulb_offset)
+
+        fridge_temp_vector = cm.health['fridge_temp']
+        freezer_temp_vector = cm.health['freezer_temp']
+
+        sensor_status_offsets = []
+        for sensor_status_item in cm.health['sensor_status']:
+            DeviceStatus.DeviceStatusStart(builder)
+            sensor_status_value = getattr(DeviceStatus, sensor_status_item['status'], None)
+            DeviceStatus.DeviceStatusAddStatus(builder, sensor_status_value)
+            sensor_status_offset = DeviceStatus.DeviceStatusEnd(builder)
+            sensor_status_offsets.append(sensor_status_offset)
+
+        Health.HealthStartSensorStatusVector(builder, len(sensor_status_offsets))
+        for offset in reversed(sensor_status_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        sensor_status_vector = builder.EndVector(len(sensor_status_offsets))
+
+        water_filter_offsets = []
+        for water_filter_item in cm.health['water_filter']:
+            DeviceStatus.DeviceStatusStart(builder)
+            water_filter_value = getattr(DeviceStatus, water_filter_item['status'], None)
+            DeviceStatus.DeviceStatusAddStatus(builder, water_filter_value)
+            water_filter_offset = DeviceStatus.DeviceStatusEnd(builder)
+            water_filter_offsets.append(water_filter_offset)
+
+        Health.HealthStartWaterFilterVector(builder, len(water_filter_offsets))
+        for offset in reversed(water_filter_offsets):
+            builder.PrependUOffsetTRelative(offset)
+        water_filter_vector = builder.EndVector(len(water_filter_offsets))
+
+
+        Health.HealthStart(builder)
+        Health.HealthAddDispenser(builder, dispenser_vector)
+        Health.HealthAddIcemaker(builder, icemaker_vector)
+        Health.HealthAddFridgeTemp(builder, fridge_temp_vector)
+        Health.HealthAddFreezerTemp(builder, freezer_temp_vector)
+        Health.HealthAddSensorStatus(builder, sensor_status_vector)
+        Health.HealthAddWaterFilter(builder, water_filter_vector)
+        serialized_msg = Health.HealthEnd(builder)
+
+        
+
 
     elif cm.type == "RESPONSE":
         # FIXME: Serialize Health correctly like above
-        contents_offset = builder.CreateString(cm.response['contents'])
-        serialized_msg = Response.Response.CreateResponse(
-            builder,
-            cm.response['code'],
-            contents_offset
-        )
+        Response.ResponseStart(builder)
+        Response.ResponseAddCode(builder, cm.response['code'])
+        Response.ResponseAddContents(builder, cm.response['contents'])
+        serialized_msg = Response.ResponseEnd(builder)
 
     # Finish the top-level message serialization
     # Start the Message object
@@ -304,22 +361,28 @@ def deserialize(buf):
     elif cm.type == MessageType.HEALTH:
         # FIXME: Deserialize Health correctly, similar to above
         health = packet.Health()
-        cm.health = {
-            'dispenser': health.Dispenser(),
-            'icemaker': health.Icemaker(),
-            'lightbulb': health.Lightbulb(),
-            'fridge_temp': health.FridgeTemp(),
-            'freezer_temp': health.FreezerTemp(),
-            'sensor_status': health.SensorStatus()
-        }
+        if cm.health is None:
+            cm.health = {}
+
+        cm.health['dispenser'] = health.Dispenser()
+        cm.health['icemaker'] = health.Icemaker()
+        cm.health['lightbulb'] = health.Lightbulb()
+        cm.health['fridge_temp'] = health.FridgeTemp()
+        cm.health['freezer_temp'] = health.FreezerTemp()
+        cm.health['sensor_status'] = health.SensorStatus()
+        cm.health['water_filter'] = health.WaterFilter()
+    
 
     elif cm.type == MessageType.RESPONSE:
-        # FIXME: Deserialize Response correctly, similar to above
         response = packet.Response()
-        cm.response = {
-            'code': response.Code(),
-            'contents': response.Contents()
-        }
+        if cm.response is None:
+            cm.response = {}
+
+        cm.response['code'] = get_key(ResponseCode)(response.Code())
+        cm.response['contents'] = response.Contents()
+
+    # Convert the message type to a string
+    
 
     cm.type = get_key(MessageType)(cm.type)
 

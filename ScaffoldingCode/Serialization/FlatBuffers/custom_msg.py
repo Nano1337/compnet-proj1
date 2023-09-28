@@ -35,15 +35,11 @@ class CustomMessage:
     elif self.type == "HEALTH" and self.health:
         #FIXME: not the right way to print out
         print("  Health Details:")
-        print("    Dispenser: {}".format(self.health.get('dispenser')))
-        print("    Icemaker: {}".format(self.health.get('icemaker')))
-        print("    Lightbulb: {}".format(self.health.get('lightbulb')))
-        print("    Fridge Temperature: {}".format(self.health.get('fridge_temp')))
-        print("    Freezer Temperature: {}".format(self.health.get('freezer_temp')))
-        print("    Sensor Status: {}".format(self.health.get('sensor_status')))
+        for key, value in self.health.items():
+            print("    {}: {}".format(key, value))
     
     elif self.type == "RESPONSE" and self.response:
         #FIXME: not the right way to print out
         print("  Response Details:")
-        print("    Code: {}".format(self.response.get('code')))
-        print("    Contents: {}".format(self.response.get('contents')))
+        for key, value in self.response.items():
+            print("    {}: {}".format(key, value))
