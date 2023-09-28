@@ -177,69 +177,25 @@ def serialize(cm):
         # FIXME: Serialize Health correctly like above
         Health.HealthStart(builder)
         
-        dispenser_offsets = []
-        for dispenser_item in cm.health['dispenser']:
-            DispenserStatus.DispenserStatusStart(builder)
-            dispenser_status_value = getattr(DispenserStatus, dispenser_item['status'], None)
-            DispenserStatus.DispenserStatusAddStatus(builder, dispenser_status_value)
-            dispenser_offset = DispenserStatus.DispenserStatusEnd(builder)
-            dispenser_offsets.append(dispenser_offset)
+        # Get attribute values
+        dispenser_value = getattr(DispenserStatus, cm.health['dispenser'], None)
+        Health.HealthAddDispenser(builder, dispenser_value)
+        
+        Health.AddIcemaker(builder, cm.health['icemaker'])
+        
+        lightbulb_value = getattr(LightbulbStatus, cm.health['lightbulb'], None)
+        Health.HealthAddLightbulb(builder, lightbulb_value)
+        
+        Health.AddFridgeTemp(builder, cm.health['fridge_temp'])
+        Health.AddFreezerTemp(builder, cm.health['freezer_temp'])
+        
+        sensor_value = getattr(DeviceStatus, cm.health['sensor_status'], None)
+        Health.HealthAddSensorStatus(builder, sensor_value)
 
-        Health.HealthStartDispenserVector(builder, len(dispenser_offsets))
-        for offset in reversed(dispenser_offsets):
-            builder.PrependUOffsetTRelative(offset)
-        dispenser_vector = builder.EndVector(len(dispenser_offsets))
+        filter_value = getattr(DeviceStatus, cm.health['water_filter'], None)
+        Health.HealthAddWaterFilter(builder, filter_value)
 
-        # icemaker is an int
-        icemaker_vector = cm.health['icemaker']
-
-        lightbulb_offsets = []
-        for lightbulb_item in cm.health['lightbulb']:
-            LightbulbStatus.LightbulbStatusStart(builder)
-            lightbulb_status_value = getattr(LightbulbStatus, lightbulb_item['status'], None)
-            LightbulbStatus.LightbulbStatusAddStatus(builder, lightbulb_status_value)
-            lightbulb_offset = LightbulbStatus.LightbulbStatusEnd(builder)
-            lightbulb_offsets.append(lightbulb_offset)
-
-        fridge_temp_vector = cm.health['fridge_temp']
-        freezer_temp_vector = cm.health['freezer_temp']
-
-        sensor_status_offsets = []
-        for sensor_status_item in cm.health['sensor_status']:
-            DeviceStatus.DeviceStatusStart(builder)
-            sensor_status_value = getattr(DeviceStatus, sensor_status_item['status'], None)
-            DeviceStatus.DeviceStatusAddStatus(builder, sensor_status_value)
-            sensor_status_offset = DeviceStatus.DeviceStatusEnd(builder)
-            sensor_status_offsets.append(sensor_status_offset)
-
-        Health.HealthStartSensorStatusVector(builder, len(sensor_status_offsets))
-        for offset in reversed(sensor_status_offsets):
-            builder.PrependUOffsetTRelative(offset)
-        sensor_status_vector = builder.EndVector(len(sensor_status_offsets))
-
-        water_filter_offsets = []
-        for water_filter_item in cm.health['water_filter']:
-            DeviceStatus.DeviceStatusStart(builder)
-            water_filter_value = getattr(DeviceStatus, water_filter_item['status'], None)
-            DeviceStatus.DeviceStatusAddStatus(builder, water_filter_value)
-            water_filter_offset = DeviceStatus.DeviceStatusEnd(builder)
-            water_filter_offsets.append(water_filter_offset)
-
-        Health.HealthStartWaterFilterVector(builder, len(water_filter_offsets))
-        for offset in reversed(water_filter_offsets):
-            builder.PrependUOffsetTRelative(offset)
-        water_filter_vector = builder.EndVector(len(water_filter_offsets))
-
-
-        Health.HealthStart(builder)
-        Health.HealthAddDispenser(builder, dispenser_vector)
-        Health.HealthAddIcemaker(builder, icemaker_vector)
-        Health.HealthAddFridgeTemp(builder, fridge_temp_vector)
-        Health.HealthAddFreezerTemp(builder, freezer_temp_vector)
-        Health.HealthAddSensorStatus(builder, sensor_status_vector)
-        Health.HealthAddWaterFilter(builder, water_filter_vector)
         serialized_msg = Health.HealthEnd(builder)
-
         
 
 

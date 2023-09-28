@@ -106,8 +106,8 @@ def driver(name, iters, vec_len):
         
         elif cm.type == 'RESPONSE':
             cm.response = {
-                'code': random.randint(0, 5),
-                'contents': random.choice(['OK', 'ERROR'])
+                'code': random.choice(['OK', 'BAD_REQUEST']),
+                'content': random.choice(['OK', 'BAD_REQUEST'])
             }
 
         print(cm)
