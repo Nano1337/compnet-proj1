@@ -96,10 +96,10 @@ def driver(name, iters, vec_len):
         elif cm.type == 'HEALTH':
             cm.health = {
                 'dispenser': random.choice(['OPTIMAL', 'PARTIAL', 'BLOCKAGE']),
-                'icemaker': random.uniform(0, 5),
+                'icemaker': random.randint(0, 5),
                 'lightbulb': random.choice(['GOOD', 'BAD']),
-                'fridge_temp': random.uniform(0, 5),
-                'freezer_temp': random.uniform(0, 5),
+                'fridge_temp': random.randint(0, 5),
+                'freezer_temp': random.randint(0, 5),
                 'sensor_status': random.choice(['GOOD', 'BAD']),
                 'water_filter': random.choice(['GOOD', 'BAD'])
             }
@@ -107,7 +107,7 @@ def driver(name, iters, vec_len):
         elif cm.type == 'RESPONSE':
             cm.response = {
                 'code': random.choice(['OK', 'BAD_REQUEST']),
-                'content': random.choice(['OK', 'BAD_REQUEST'])
+                'contents': random.choice(['OK', 'BAD_REQUEST'])
             }
 
         print(cm)

@@ -31,9 +31,9 @@ import CustomAppProto.Health as Health
 import CustomAppProto.Response as Response
 import CustomAppProto.Milk as Milk
 from CustomAppProto.MilkType import MilkType
-import CustomAppProto.ResponseCode as ResponseCode
-import CustomAppProto.DispenserStatus as DispenserStatus
-import CustomAppProto.LightbulbStatus as LightbulbStatus
+from CustomAppProto.ResponseCode import ResponseCode
+from CustomAppProto.DispenserStatus import DispenserStatus
+from CustomAppProto.LightbulbStatus import LightbulbStatus
 import CustomAppProto.Veggies as Veggies
 import CustomAppProto.Drinks as Drinks
 import CustomAppProto.DrinksCans as DrinksCans
@@ -42,7 +42,7 @@ import CustomAppProto.Bread as Bread
 from CustomAppProto.BreadType import BreadType
 import CustomAppProto.Meat as Meat
 from CustomAppProto.MeatType import MeatType
-import CustomAppProto.DeviceStatus as DeviceStatus
+from CustomAppProto.DeviceStatus import DeviceStatus
 
 # This is the method we will invoke from our driver program
 # Note that if you have have multiple different message types, we could have
@@ -200,10 +200,11 @@ def serialize(cm):
 
 
     elif cm.type == "RESPONSE":
-        # FIXME: Serialize Health correctly like above
+        contents = builder.CreateString(cm.response['contents'])
+        code_value = getattr(ResponseCode, cm.response['code'], None)
         Response.ResponseStart(builder)
-        Response.ResponseAddCode(builder, cm.response['code'])
-        Response.ResponseAddContents(builder, cm.response['contents'])
+        Response.ResponseAddCode(builder, code_value)
+        Response.ResponseAddContents(builder, contents)
         serialized_msg = Response.ResponseEnd(builder)
 
     # Finish the top-level message serialization
@@ -320,13 +321,13 @@ def deserialize(buf):
         if cm.health is None:
             cm.health = {}
 
-        cm.health['dispenser'] = health.Dispenser()
+        cm.health['dispenser'] = get_key(DispenserStatus)(health.Dispenser())
         cm.health['icemaker'] = health.Icemaker()
-        cm.health['lightbulb'] = health.Lightbulb()
+        cm.health['lightbulb'] = get_key(LightbulbStatus)(health.Lightbulb())
         cm.health['fridge_temp'] = health.FridgeTemp()
         cm.health['freezer_temp'] = health.FreezerTemp()
-        cm.health['sensor_status'] = health.SensorStatus()
-        cm.health['water_filter'] = health.WaterFilter()
+        cm.health['sensor_status'] = get_key(DeviceStatus)(health.SensorStatus())
+        cm.health['water_filter'] = get_key(DeviceStatus)(health.WaterFilter())
     
 
     elif cm.type == MessageType.RESPONSE:
@@ -335,7 +336,7 @@ def deserialize(buf):
             cm.response = {}
 
         cm.response['code'] = get_key(ResponseCode)(response.Code())
-        cm.response['contents'] = response.Contents()
+        cm.response['contents'] = response.Contents().decode('utf-8')
 
     # Convert the message type to a string
     
