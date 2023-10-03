@@ -21,6 +21,10 @@ import sys    # for system exception
 import time   # for sleep
 import argparse # for argument parsing
 import zmq    # this package must be imported for ZMQ to work
+sys.path.append('/home/roberthsheng/CN/compnet-proj1/ScaffoldingCode/Serialization/FlatBuffers/') # change this to the path of your serialize.py
+import serialize as sz
+from custom_msg import CustomMessage
+import random
 
 ##################################
 # Driver program
@@ -69,9 +73,87 @@ def driver (args):
   print ("client sending Hello messages for specified num of iterations")
   for i in range (args.iters):
     try:
-      #  Wait for next request from client
-      print ("Send a HelloWorld")
-      socket.send (b"HelloWorld")
+      cm = CustomMessage()  # create a new instance for each iteration
+
+      cm.type = random.choice(['ORDER', 'HEALTH', 'RESPONSE'])     
+
+      if cm.type == 'ORDER':
+
+          # Generate random values for Veggies
+          veggies = {
+              'tomato': random.uniform(0, 5),
+              'cucumber': random.uniform(0, 5),
+              'lettuce': random.uniform(0, 5),
+              'broccoli': random.uniform(0, 5),
+              'spinach': random.uniform(0, 5),
+              'carrots': random.uniform(0, 5)
+          }
+
+          # Generate random values for DrinksCans
+          drinks_cans = {
+              'coke': random.randint(1, 5),
+              'beer': random.randint(1, 5),
+              'lemonade': random.randint(1, 5)
+          }
+
+          # Generate random values for DrinksBottles
+          drinks_bottles = {
+              'sprite': random.randint(1, 5),
+              'gingerale': random.randint(1, 5),
+              'water': random.randint(1, 5)
+          }
+
+          # Aggregate Drinks
+          drinks = {
+              'cans': drinks_cans,
+              'bottles': drinks_bottles
+          }
+
+          # Generate random values for Milk
+          milk = [{
+              'type': random.choice(['ONE_PERCENT', 'TWO_PERCENT', 'FAT_FREE', 'WHOLE', 'ALMOND', 'CASHEW', 'OAT']),
+              'quantity': random.uniform(0, 5)
+          }]
+
+          # Generate random values for Bread
+          bread = [{
+              'type': random.choice(['WHOLE_WHEAT', 'PUMPERNICKEL', 'RYE']),
+              'quantity': random.uniform(0, 5)
+          }]
+
+          # Generate random values for Meat
+          meat = [{
+              'type': random.choice(['BEEF', 'CHICKEN', 'PORK', 'TURKEY']),
+              'quantity': random.uniform(0, 5)
+          }]
+
+          # Combine all into Order
+          cm.order = {
+              'veggies': veggies,
+              'drinks': drinks,
+              'milk': milk,
+              'bread': bread,
+              'meat': meat
+          }
+      
+      elif cm.type == 'HEALTH':
+          cm.health = {
+              'dispenser': random.choice(['OPTIMAL', 'PARTIAL', 'BLOCKAGE']),
+              'icemaker': random.randint(0, 5),
+              'lightbulb': random.choice(['GOOD', 'BAD']),
+              'fridge_temp': random.randint(0, 5),
+              'freezer_temp': random.randint(0, 5),
+              'sensor_status': random.choice(['GOOD', 'BAD']),
+              'water_filter': random.choice(['GOOD', 'BAD'])
+          }
+      
+      elif cm.type == 'RESPONSE':
+          cm.response = {
+              'code': random.choice(['OK', 'BAD_REQUEST']),
+              'contents': random.choice(['OK', 'BAD_REQUEST'])
+          }
+      serialized_cm = sz.serialize(cm)
+      socket.send (serialized_cm)
     except zmq.ZMQError as err:
       print ("ZeroMQ Error sending: {}".format (err))
       socket.close ()
@@ -84,8 +166,10 @@ def driver (args):
     try:
       # receive a reply
       print ("Waiting to receive")
-      message = socket.recv ()
-      print ("Received reply in iteration {} is {}".format (i, message))
+      message = socket.recv()
+      cm = sz.deserialize(message)
+      print ("Received reply in iteration {} is:".format (i))
+      cm.dump()
     except zmq.ZMQError as err:
       print ("ZeroMQ Error receiving: {}".format (err))
       socket.close ()

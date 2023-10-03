@@ -21,6 +21,9 @@ import sys    # for system exception
 import time   # for sleep
 import argparse # for argument parsing
 import zmq    # this package must be imported for ZMQ to work
+sys.path.append('/home/roberthsheng/CN/compnet-proj1/ScaffoldingCode/Serialization/FlatBuffers/') # change this to the path of your serialize.py
+import serialize as sz
+from custom_msg import CustomMessage
 
 ##################################
 # Driver program
@@ -73,7 +76,8 @@ def driver (args):
     try:
       #  Wait for next request from client
       message = socket.recv()
-      print("Received request: %s" % message)
+      cm = sz.deserialize(message)
+      print("Received request: %s" % cm)
     except zmq.ZMQError as err:
       print ("ZeroMQ Error receiving: {}".format (err))
       socket.close ()
@@ -89,8 +93,8 @@ def driver (args):
 
     try:
       #  Send reply back to client
-      print ("Send dummy reply")
-      socket.send (b"ACK")
+      serialized_cm = sz.serialize(cm)
+      socket.send (serialized_cm)
     except zmq.ZMQError as err:
       print ("ZeroMQ Error sending: {}".format (err))
       socket.close ()
